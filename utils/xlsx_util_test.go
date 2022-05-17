@@ -1,50 +1,33 @@
 package utils
 
 import (
-	"encoding/csv"
+	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/xuri/excelize/v2"
-	"os"
+	"testing"
+	"time"
 )
 
-type xlsxUtil struct {
+func TestXlsxUtil_NewXlsxFile(t *testing.T) {
+	log.Info(fmt.Sprintf("the data %d id %d", []int{2, 4}, 12))
+	XlsxUtil.fileDir = ""
+	fileName := "churn_result_01.xlsx"
+	XlsxUtil.NewXlsxFile(fileName)
+	XlsxUtil.AppendRowData(fileName, []interface{}{"company_id", "agent_id", "result", "fail_reason"})
 }
 
-var XlsxUtil = xlsxUtil{}
+func TestXlsxUtil_AddRowData(t *testing.T) {
+	XlsxUtil.fileDir = ""
+	fileName := "churn_result_01.xlsx"
+	//XlsxUtil.NewXlsxFile(fileName)
+	//XlsxUtil.AppendRowData(fileName, []interface{}{"company_id", "agent_id", "result", "fail_reason"})
+	//XlsxUtil.AppendRowData(fileName, []interface{}{"32", 12, true})
+	//XlsxUtil.AppendRowData(fileName, []interface{}{"32", 12, true, ""})
 
-func (xl xlsxUtil) ReadAllData(filePath string) [][]string {
-
-	log.Info("parse file " + filePath)
-
-	open, err := os.Open(filePath)
-	if err != nil {
-		panic("open " + filePath + " error " + err.Error())
+	for i := 0; i < 50; i++ {
+		go func() {
+			XlsxUtil.AppendRowData(fileName, []interface{}{"32", 12, false, "fail content."})
+		}()
 	}
 
-	reader := csv.NewReader(open)
-	if reader == nil {
-		panic("reader nil.")
-	}
-
-	data, err := reader.ReadAll()
-	if err != nil {
-		panic(err)
-	}
-	log.Infof("parse data is %s", data)
-	return data
-}
-
-func (xl *xlsxUtil) newXlsxFile(fileName string) {
-	f := excelize.NewFile()
-	// 创建一个工作表
-	index := f.NewSheet(fileName)
-	// 设置单元格的值
-	f.SetCellValue("Sheet2", "A2", "Hello world.")
-	f.SetCellValue("Sheet1", "B2", 100)
-	// 设置工作簿的默认工作表
-	f.SetActiveSheet(index)
-	// 根据指定路径保存文件
-	if err := f.SaveAs("/result/" + fileName + ".xlsx"); err != nil {
-		log.Errorln(err)
-	}
+	time.Sleep(20 * time.Second)
 }

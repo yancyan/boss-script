@@ -10,7 +10,7 @@ import (
 
 var name string
 
-func initLogMethod(appName string) {
+func initLog(appName string) {
 	name = appName
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)

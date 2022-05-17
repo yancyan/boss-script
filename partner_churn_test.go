@@ -4,16 +4,9 @@ import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
 	"stariboss-script/env"
+	"stariboss-script/utils"
 	"testing"
 )
-
-func TestPost(t *testing.T) {
-
-}
-
-func TestGet(t *testing.T) {
-
-}
 
 func TestChurnRequest(t *testing.T) {
 	rInfo, err := json.Marshal(ChurnInfo{
@@ -24,10 +17,12 @@ func TestChurnRequest(t *testing.T) {
 		panic(err)
 	}
 
-	bytes := Post(environment{
-		Url:    env.PartnerChurn.ChurnUrl,
-		Cookie: env.PartnerChurn.Cookie,
+	bytes, _ := utils.RequestUtil.Post(utils.RequestContext{
+		Url:    env.Config.PartnerChurn.ChurnUrl,
+		Cookie: env.Config.PartnerChurn.Cookie,
 	}, rInfo)
+	info := ChurnResult{}
+	_ = json.Unmarshal(bytes, &info)
 
 	log.Info("result ", string(bytes))
 }

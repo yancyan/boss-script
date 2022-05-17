@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"bytes"
@@ -8,12 +8,25 @@ import (
 	"net/http"
 )
 
-type environment struct {
+type requestUtil struct {
+}
+
+var RequestUtil = requestUtil{}
+
+type RequestContext struct {
 	Url    string
 	Cookie string
 }
 
-func Get(env environment, params map[string]string) []byte {
+func (rq requestUtil) Get(env RequestContext, params map[string]string) []byte {
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorln(err)
+			panic(err)
+		}
+	}()
+
 	request, err := http.NewRequest("GET", env.Url, nil)
 	if err != nil {
 		panic(err)
@@ -37,11 +50,19 @@ func Get(env environment, params map[string]string) []byte {
 	if err != nil {
 		panic(err)
 	}
-	log.Infof("the body is %s", string(all))
+	log.Infof("the resp body is %s", string(all))
 	return all
 }
 
-func Post(env environment, params []byte) []byte {
+func (rq requestUtil) Post(env RequestContext, params []byte) ([]byte, error) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Errorf("the request occur error, msg is %+v", err)
+			panic(err)
+		}
+	}()
+
 	request, err := http.NewRequest("POST", env.Url, bytes.NewBuffer(params))
 	if err != nil {
 		panic(err)
@@ -62,26 +83,24 @@ func Post(env environment, params []byte) []byte {
 
 	all, err := ioutil.ReadAll(resp)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	log.Infof("the body is %s", string(all))
-	return nil
+	//log.Infof("the resp body is %s", string(all))
+	return all, nil
 }
 
-/**
- * 使用panic，是否继续由上层处理
- */
 func sendRequest(request *http.Request) io.ReadCloser {
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		panic(err)
 	}
 	if response.StatusCode != 200 {
+		defer response.Body.Close()
 		all, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			panic(err)
 		}
-		panic("status code not 200, " + string(all))
+		panic("the status " + response.Status + ", " + string(all))
 	}
 	return response.Body
 }
